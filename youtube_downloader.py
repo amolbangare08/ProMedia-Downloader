@@ -220,7 +220,7 @@ class ModernDownloaderApp(ctk.CTk):
         self.card.grid(row=0, column=0, sticky="ew")
 
         # Header
-        self.title_label = ctk.CTkLabel(self.card, text="DOWNLOADER", font=("Segoe UI", 24, "bold"), text_color=C_TEXT_MAIN)
+        self.title_label = ctk.CTkLabel(self.card, text="YT DOWNLOADER", font=("Segoe UI", 24, "bold"), text_color=C_TEXT_MAIN)
         self.title_label.pack(pady=(40, 5))
         self.subtitle_label = ctk.CTkLabel(self.card, text="Professional Video & Audio Extractor", font=("Segoe UI", 12), text_color=C_TEXT_SUB)
         self.subtitle_label.pack(pady=(0, 30))
