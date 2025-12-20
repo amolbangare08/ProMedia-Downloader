@@ -3,7 +3,6 @@
 **The High-Fidelity YouTube Downloader built for Video Editors.**
 
 ![App Screenshot](image.png)
-*(Replace this link with a screenshot of your actual app running)*
 
 ## 🛑 The Problem
 As a Premiere Pro editor, you know the pain:
