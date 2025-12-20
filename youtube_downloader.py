@@ -45,7 +45,28 @@ def get_windows_accent():
     except:
         return "#6366f1"
 
-# --- 4. ADAPTIVE COLOR PALETTE (Light, Dark) ---
+# --- 4. FONT LOADER (NEW) ---
+# This loads the font file into memory so the app can use it without installation
+def load_custom_fonts():
+    font_files = ["Poppins-Regular.ttf", "Poppins-Bold.ttf"]
+    fonts_loaded = False
+    
+    # Determine path (handle dev mode vs compiled exe mode)
+    base_path = sys._MEIPASS if is_frozen() else os.path.abspath(".")
+    
+    for font_file in font_files:
+        font_path = os.path.join(base_path, font_file)
+        if os.path.exists(font_path):
+            # 0x10 = FR_PRIVATE (Only visible to this process, doesn't need admin)
+            # 0x01 = FR_NOT_ENUM
+            res = ctypes.windll.gdi32.AddFontResourceExW(font_path, 0x10, 0)
+            if res > 0:
+                fonts_loaded = True
+    
+    # Return font name if loaded, else fallback to standard Windows font
+    return "Poppins" if fonts_loaded else "Segoe UI"
+
+# --- 5. ADAPTIVE COLOR PALETTE (Light, Dark) ---
 C_BG           = ("#ffffff", "#09090b") 
 C_CARD         = ("#f4f4f5", "#18181b") 
 C_CARD_BORDER  = ("#e4e4e7", "#27272a") 
@@ -56,10 +77,8 @@ C_TEXT_SUB     = ("#71717a", "#a1a1aa")
 C_INPUT_BG     = ("#ffffff", "#09090b")
 C_INPUT_BORDER = ("#d4d4d8", "#3f3f46") 
 
-# Specific fix for Segmented Button Text visibility
-# We make unselected background darker in light mode so White text always works
 C_SEGMENT_UNSELECTED = ("#a1a1aa", "#27272a") 
-C_SEGMENT_TEXT       = "#ffffff" # Always white for best contrast on Accents
+C_SEGMENT_TEXT       = "#ffffff"
 
 SYS_ACCENT     = get_windows_accent()
 C_ACCENT       = ("#4f46e5", "#6366f1") 
@@ -140,6 +159,9 @@ def check_tool_dependencies():
 
     return ffmpeg_path, handbrake_path
 
+# Initialize Font and set global variable
+APP_FONT = load_custom_fonts()
+
 # --- TOOLTIP ---
 class ToolTip:
     def __init__(self, widget, text):
@@ -159,7 +181,7 @@ class ToolTip:
         tw.wm_geometry(f"+{x}+{y}")
         label = tk.Label(tw, text=self.text, justify="left",
                          background="#27272a", foreground="#fafafa",
-                         relief="flat", borderwidth=0, font=("Segoe UI", 9), padx=8, pady=6)
+                         relief="flat", borderwidth=0, font=(APP_FONT, 9), padx=8, pady=6)
         label.pack()
 
     def hide_tip(self, event=None):
@@ -196,19 +218,19 @@ class ModernDownloaderApp(ctk.CTk):
         
         self.theme_menu = ctk.CTkOptionMenu(
             self.top_bar, values=["Light", "Dark", "System"], command=self.change_theme,
-            width=90, height=28, font=("Segoe UI", 11), fg_color=C_CARD_BORDER,
+            width=90, height=28, font=(APP_FONT, 11), fg_color=C_CARD_BORDER,
             text_color=C_TEXT_MAIN, button_color=C_INPUT_BORDER, button_hover_color=C_TEXT_SUB
         )
         self.theme_menu.pack(side="right")
-        ctk.CTkLabel(self.top_bar, text="Theme:", font=("Segoe UI", 11), text_color=C_TEXT_SUB).pack(side="right", padx=5)
+        ctk.CTkLabel(self.top_bar, text="Theme:", font=(APP_FONT, 11), text_color=C_TEXT_SUB).pack(side="right", padx=5)
 
         self.accent_menu = ctk.CTkOptionMenu(
             self.top_bar, values=["Indigo", "Windows System", "Emerald", "Blue"], command=self.change_accent,
-            width=130, height=28, font=("Segoe UI", 11), fg_color=C_CARD_BORDER,
+            width=130, height=28, font=(APP_FONT, 11), fg_color=C_CARD_BORDER,
             text_color=C_TEXT_MAIN, button_color=C_INPUT_BORDER, button_hover_color=C_TEXT_SUB
         )
         self.accent_menu.pack(side="right", padx=(0, 20))
-        ctk.CTkLabel(self.top_bar, text="Accent:", font=("Segoe UI", 11), text_color=C_TEXT_SUB).pack(side="right", padx=5)
+        ctk.CTkLabel(self.top_bar, text="Accent:", font=(APP_FONT, 11), text_color=C_TEXT_SUB).pack(side="right", padx=5)
 
         # --- 2. MAIN CONTENT ---
         self.main_container = ctk.CTkFrame(self, fg_color="transparent")
@@ -220,9 +242,9 @@ class ModernDownloaderApp(ctk.CTk):
         self.card.grid(row=0, column=0, sticky="ew")
 
         # Header
-        self.title_label = ctk.CTkLabel(self.card, text="YT DOWNLOADER", font=("Segoe UI", 24, "bold"), text_color=C_TEXT_MAIN)
+        self.title_label = ctk.CTkLabel(self.card, text="YT DOWNLOADER", font=(APP_FONT, 24, "bold"), text_color=C_TEXT_MAIN)
         self.title_label.pack(pady=(40, 5))
-        self.subtitle_label = ctk.CTkLabel(self.card, text="Professional Video & Audio Extractor", font=("Segoe UI", 12), text_color=C_TEXT_SUB)
+        self.subtitle_label = ctk.CTkLabel(self.card, text="Professional Video & Audio Extractor", font=(APP_FONT, 12), text_color=C_TEXT_SUB)
         self.subtitle_label.pack(pady=(0, 30))
 
         # Input
@@ -231,13 +253,13 @@ class ModernDownloaderApp(ctk.CTk):
         
         self.url_entry = ctk.CTkEntry(
             self.input_frame, textvariable=self.url_var, placeholder_text="Paste YouTube link here...", height=50,
-            font=("Segoe UI", 13), border_width=1, border_color=C_INPUT_BORDER, fg_color=C_INPUT_BG, text_color=C_TEXT_MAIN, corner_radius=12
+            font=(APP_FONT, 13), border_width=1, border_color=C_INPUT_BORDER, fg_color=C_INPUT_BG, text_color=C_TEXT_MAIN, corner_radius=12
         )
         self.url_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
         self.url_entry.bind("<KeyRelease>", self.clear_status)
 
         self.paste_btn = ctk.CTkButton(
-            self.input_frame, text="PASTE", width=100, height=50, font=("Segoe UI", 12, "bold"),
+            self.input_frame, text="PASTE", width=100, height=50, font=(APP_FONT, 12, "bold"),
             fg_color=self.current_accent, hover_color=self.current_accent_hover, text_color="#ffffff", corner_radius=12,
             command=self.paste_clipboard
         )
@@ -251,7 +273,7 @@ class ModernDownloaderApp(ctk.CTk):
         # FIXED: Unselected color is slightly darker in light mode so White text works
         self.format_switch = ctk.CTkSegmentedButton(
             self.controls_frame, values=["Video + Audio", "Video Only", "Audio Only"], variable=self.format_var,
-            font=("Segoe UI", 12, "bold"), height=40, corner_radius=10,
+            font=(APP_FONT, 12, "bold"), height=40, corner_radius=10,
             selected_color=self.current_accent, selected_hover_color=self.current_accent_hover,
             unselected_color=C_SEGMENT_UNSELECTED, unselected_hover_color=C_INPUT_BORDER, 
             text_color=C_SEGMENT_TEXT, # Forced White Text
@@ -267,30 +289,31 @@ class ModernDownloaderApp(ctk.CTk):
         self.res_menu = ctk.CTkOptionMenu(
             self.options_container, values=["Best Available", "2160p (4K)", "1440p (2K)", "1080p", "720p", "480p"], variable=self.res_var,
             width=140, height=35, fg_color=C_INPUT_BG, button_color=C_INPUT_BORDER, button_hover_color=C_CARD_BORDER,
-            text_color=C_TEXT_MAIN, font=("Segoe UI", 12), dropdown_fg_color=C_CARD, dropdown_text_color=C_TEXT_MAIN
+            text_color=C_TEXT_MAIN, font=(APP_FONT, 12), dropdown_fg_color=C_CARD, dropdown_text_color=C_TEXT_MAIN
         )
 
         self.use_hb_var = ctk.BooleanVar(value=True)
         self.hb_checkbox = ctk.CTkCheckBox(
             self.options_container, text="Optimize (HandBrake)", variable=self.use_hb_var,
-            font=("Segoe UI", 12), text_color=C_TEXT_MAIN, border_color=C_TEXT_SUB,
+            font=(APP_FONT, 12), text_color=C_TEXT_MAIN, border_color=C_TEXT_SUB,
             hover_color=self.current_accent, fg_color=self.current_accent, checkmark_color="white",
             command=self.toggle_hb_menu
         )
-        ToolTip(self.hb_checkbox, "Professional re-encoding for Premiere Pro compatibility.")
+        ToolTip(self.hb_checkbox, "Fixes VFR glitches & audio sync. Essential for Editing Softwares")
 
         self.hb_preset_var = ctk.StringVar(value="Auto (Smart Match)")
         self.hb_menu = ctk.CTkOptionMenu(
             self.options_container,
             values=["Auto (Smart Match)", "Fast 1080p30", "HQ 1080p30 Surround", "Fast 2160p60 4K", "HQ 2160p60 4K", "Fast 720p30", "Production Standard"],
             variable=self.hb_preset_var, width=180, height=35, fg_color=C_INPUT_BG, button_color=C_INPUT_BORDER,
-            button_hover_color=C_CARD_BORDER, text_color=C_TEXT_MAIN, font=("Segoe UI", 12), dropdown_fg_color=C_CARD
+            button_hover_color=C_CARD_BORDER, text_color=C_TEXT_MAIN, font=(APP_FONT, 12), dropdown_fg_color=C_CARD
         )
 
         self.audio_fmt_var = ctk.StringVar(value="mp3")
         self.audio_fmt_menu = ctk.CTkOptionMenu(
             self.options_container, values=["mp3", "m4a", "wav", "flac"], variable=self.audio_fmt_var,
-            width=100, height=35, fg_color=C_INPUT_BG, button_color=C_INPUT_BORDER, text_color=C_TEXT_MAIN
+            width=100, height=35, fg_color=C_INPUT_BG, button_color=C_INPUT_BORDER, text_color=C_TEXT_MAIN, font=(APP_FONT, 12),
+            dropdown_fg_color=C_CARD, dropdown_text_color=C_TEXT_MAIN
         )
         self.update_options_visibility("Video + Audio")
 
@@ -298,14 +321,14 @@ class ModernDownloaderApp(ctk.CTk):
         self.action_frame = ctk.CTkFrame(self.card, fg_color="transparent")
         self.action_frame.pack(pady=(10, 30), padx=50, fill="x", side="bottom")
 
-        self.status_label = ctk.CTkLabel(self.action_frame, textvariable=self.status_var, text_color=C_TEXT_SUB, font=("Segoe UI", 11))
+        self.status_label = ctk.CTkLabel(self.action_frame, textvariable=self.status_var, text_color=C_TEXT_SUB, font=(APP_FONT, 11))
         self.status_label.pack(side="bottom", pady=(5, 0))
 
         self.progress_bar = ctk.CTkProgressBar(self.action_frame, height=6, corner_radius=3, progress_color=self.current_accent, fg_color=C_INPUT_BORDER)
         self.progress_bar.set(0)
 
         self.download_btn = ctk.CTkButton(
-            self.action_frame, text="START DOWNLOAD", font=("Segoe UI", 13, "bold"), height=55, corner_radius=12,
+            self.action_frame, text="START DOWNLOAD", font=(APP_FONT, 13, "bold"), height=55, corner_radius=12,
             fg_color=self.current_accent, hover_color=self.current_accent_hover, text_color="#ffffff",
             command=self.initiate_download
         )
