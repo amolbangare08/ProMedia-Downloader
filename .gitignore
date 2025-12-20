@@ -1,0 +1,11 @@
+# Ignore private proxies
+proxies.txt
+
+# Ignore build artifacts (if you compile to exe)
+build/
+dist/
+*.spec
+
+# Ignore python cache
+__pycache__/
+*.pyc
