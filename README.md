@@ -2,7 +2,7 @@
 
 **The High-Fidelity YouTube Downloader built for Video Editors.**
 
-![App Screenshot](https://via.placeholder.com/800x500?text=ProMedia+Downloader+Interface)
+![App Screenshot](image.png)
 *(Replace this link with a screenshot of your actual app running)*
 
 ## 🛑 The Problem
