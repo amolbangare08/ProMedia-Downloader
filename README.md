@@ -1,6 +1,3 @@
-Here is the full, final `README.md` code. You can copy this entire block and paste it directly into your file.
-
-```markdown
 # ProMedia Downloader 🎬
 
 **The High-Fidelity YouTube Downloader & VFR Converter for Video Editors.**
