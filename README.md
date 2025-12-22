@@ -4,7 +4,7 @@
 
 ![App Screenshot](screenshot.png)
 
-> **Fix YouTube glitches in Premiere Pro & DaVinci Resolve automatically.**
+**Fix YouTube glitches in Premiere Pro & DaVinci Resolve automatically.**
 > *Keywords: YouTube to MP4 4K, Fix VFR Audio Sync, HandBrake Automation, Variable Frame Rate Fix, Premiere Pro Glitch Fix.*
 
 ## 🛑 The Problem: "Why does my footage glitch?"
@@ -44,10 +44,10 @@ As a video editor, you know the pain:
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/amolbangare08/ProMedia-Downloader.git](https://github.com/amolbangare08/ProMedia-Downloader.git)
+   git clone https://github.com/amolbangare08/ProMedia-Downloader.git
    cd ProMedia-Downloader
 
-```
+
 
 2. **Install dependencies:**
 ```bash
