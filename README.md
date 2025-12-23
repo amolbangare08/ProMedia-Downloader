@@ -100,5 +100,5 @@ Found a bug? Want to add a feature?
 Distributed under the MIT License. See `LICENSE` for more information.
 
 
-*Built by Editors, for Editors.*
+**Built by Editors, for Editors.**
 
