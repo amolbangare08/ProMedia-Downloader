@@ -45,7 +45,7 @@ def get_windows_accent():
     except:
         return "#6366f1"
 
-# --- 4. FONT LOADER (NEW) ---
+# --- 4. FONT LOADER ---
 # This loads the font file into memory so the app can use it without installation
 def load_custom_fonts():
     font_files = ["Poppins-Regular.ttf", "Poppins-Bold.ttf"]
@@ -59,9 +59,11 @@ def load_custom_fonts():
         if os.path.exists(font_path):
             # 0x10 = FR_PRIVATE (Only visible to this process, doesn't need admin)
             # 0x01 = FR_NOT_ENUM
-            res = ctypes.windll.gdi32.AddFontResourceExW(font_path, 0x10, 0)
-            if res > 0:
-                fonts_loaded = True
+            try:
+                res = ctypes.windll.gdi32.AddFontResourceExW(font_path, 0x10, 0)
+                if res > 0:
+                    fonts_loaded = True
+            except: pass
     
     # Return font name if loaded, else fallback to standard Windows font
     return "Poppins" if fonts_loaded else "Segoe UI"
@@ -195,6 +197,7 @@ class ModernDownloaderApp(ctk.CTk):
         self.handbrake_path = handbrake_path
         self.stop_event = threading.Event()
         self.current_process = None
+        self.downloading = False # FIXED: Missing variable causing crash
         
         icon_path = resource_path("app.ico")
         if os.path.exists(icon_path): self.iconbitmap(icon_path)
@@ -270,13 +273,12 @@ class ModernDownloaderApp(ctk.CTk):
         self.controls_frame.pack(pady=25, padx=50, fill="x")
 
         self.format_var = ctk.StringVar(value="Video + Audio")
-        # FIXED: Unselected color is slightly darker in light mode so White text works
         self.format_switch = ctk.CTkSegmentedButton(
             self.controls_frame, values=["Video + Audio", "Video Only", "Audio Only"], variable=self.format_var,
             font=(APP_FONT, 12, "bold"), height=40, corner_radius=10,
             selected_color=self.current_accent, selected_hover_color=self.current_accent_hover,
             unselected_color=C_SEGMENT_UNSELECTED, unselected_hover_color=C_INPUT_BORDER, 
-            text_color=C_SEGMENT_TEXT, # Forced White Text
+            text_color=C_SEGMENT_TEXT, 
             command=self.update_options_visibility 
         )
         self.format_switch.pack(fill="x", pady=(0, 15))
@@ -299,7 +301,7 @@ class ModernDownloaderApp(ctk.CTk):
             hover_color=self.current_accent, fg_color=self.current_accent, checkmark_color="white",
             command=self.toggle_hb_menu
         )
-        ToolTip(self.hb_checkbox, "Fixes VFR glitches & audio sync. Essential for Editing Softwares")
+        ToolTip(self.hb_checkbox, "Fixes VFR glitches & audio sync. Essential for Premiere Pro & DaVinci Resolve.")
 
         self.hb_preset_var = ctk.StringVar(value="Auto (Smart Match)")
         self.hb_menu = ctk.CTkOptionMenu(
