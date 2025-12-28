@@ -34,6 +34,7 @@ if not is_frozen():
 import requests
 import customtkinter as ctk
 import yt_dlp
+from yt_dlp.utils import download_range_func
 
 # --- 3. SYSTEM ACCENT COLOR ---
 def get_windows_accent():
@@ -46,29 +47,24 @@ def get_windows_accent():
         return "#6366f1"
 
 # --- 4. FONT LOADER ---
-# This loads the font file into memory so the app can use it without installation
 def load_custom_fonts():
     font_files = ["Poppins-Regular.ttf", "Poppins-Bold.ttf"]
     fonts_loaded = False
     
-    # Determine path (handle dev mode vs compiled exe mode)
     base_path = sys._MEIPASS if is_frozen() else os.path.abspath(".")
     
     for font_file in font_files:
         font_path = os.path.join(base_path, font_file)
         if os.path.exists(font_path):
-            # 0x10 = FR_PRIVATE (Only visible to this process, doesn't need admin)
-            # 0x01 = FR_NOT_ENUM
             try:
                 res = ctypes.windll.gdi32.AddFontResourceExW(font_path, 0x10, 0)
                 if res > 0:
                     fonts_loaded = True
             except: pass
     
-    # Return font name if loaded, else fallback to standard Windows font
     return "Poppins" if fonts_loaded else "Segoe UI"
 
-# --- 5. ADAPTIVE COLOR PALETTE (Light, Dark) ---
+# --- 5. ADAPTIVE COLOR PALETTE ---
 C_BG           = ("#ffffff", "#09090b") 
 C_CARD         = ("#f4f4f5", "#18181b") 
 C_CARD_BORDER  = ("#e4e4e7", "#27272a") 
@@ -126,6 +122,30 @@ def check_internet():
         return True
     except OSError: return False
 
+def parse_time_to_seconds(time_str):
+    """Converts various time formats to integer seconds"""
+    if not time_str: return 0
+    try:
+        # If user types raw seconds (e.g. "90")
+        if time_str.isdigit():
+            return int(time_str)
+            
+        parts = list(map(int, time_str.strip().split(':')))
+        if len(parts) == 3: return parts[0]*3600 + parts[1]*60 + parts[2] # HH:MM:SS
+        if len(parts) == 2: return parts[0]*60 + parts[1] # MM:SS
+        return parts[0] # SS
+    except: return 0
+
+def format_seconds_to_str(seconds):
+    """Converts integer seconds back to MM:SS or HH:MM:SS"""
+    if seconds < 3600:
+        m, s = divmod(seconds, 60)
+        return f"{m:02d}:{s:02d}"
+    else:
+        h, remainder = divmod(seconds, 3600)
+        m, s = divmod(remainder, 60)
+        return f"{h:02d}:{m:02d}:{s:02d}"
+
 def check_tool_dependencies():
     print("-" * 50); print("SYSTEM INITIALIZATION..."); print("-" * 50)
     cwd = os.getcwd()
@@ -161,7 +181,6 @@ def check_tool_dependencies():
 
     return ffmpeg_path, handbrake_path
 
-# Initialize Font and set global variable
 APP_FONT = load_custom_fonts()
 
 # --- TOOLTIP ---
@@ -197,7 +216,7 @@ class ModernDownloaderApp(ctk.CTk):
         self.handbrake_path = handbrake_path
         self.stop_event = threading.Event()
         self.current_process = None
-        self.downloading = False # FIXED: Missing variable causing crash
+        self.downloading = False
         
         icon_path = resource_path("app.ico")
         if os.path.exists(icon_path): self.iconbitmap(icon_path)
@@ -215,7 +234,7 @@ class ModernDownloaderApp(ctk.CTk):
         self.current_accent = C_ACCENT
         self.current_accent_hover = C_ACCENT_HOVER
 
-        # --- 1. TOP BAR ---
+        # --- TOP BAR ---
         self.top_bar = ctk.CTkFrame(self, fg_color="transparent", height=40)
         self.top_bar.grid(row=0, column=0, sticky="ew", padx=20, pady=(15, 0))
         
@@ -235,7 +254,7 @@ class ModernDownloaderApp(ctk.CTk):
         self.accent_menu.pack(side="right", padx=(0, 20))
         ctk.CTkLabel(self.top_bar, text="Accent:", font=(APP_FONT, 11), text_color=C_TEXT_SUB).pack(side="right", padx=5)
 
-        # --- 2. MAIN CONTENT ---
+        # --- MAIN CONTENT ---
         self.main_container = ctk.CTkFrame(self, fg_color="transparent")
         self.main_container.grid(row=1, column=0, sticky="nsew", padx=40, pady=20)
         self.main_container.grid_columnconfigure(0, weight=1)
@@ -294,6 +313,36 @@ class ModernDownloaderApp(ctk.CTk):
             text_color=C_TEXT_MAIN, font=(APP_FONT, 12), dropdown_fg_color=C_CARD, dropdown_text_color=C_TEXT_MAIN
         )
 
+        self.trim_var = ctk.BooleanVar(value=False)
+        self.trim_checkbox = ctk.CTkCheckBox(
+            self.options_container, text="Cut/Trim", variable=self.trim_var,
+            font=(APP_FONT, 12), text_color=C_TEXT_MAIN, border_color=C_TEXT_SUB,
+            hover_color=self.current_accent, fg_color=self.current_accent, checkmark_color="white",
+            command=self.toggle_trim_inputs
+        )
+        
+        self.trim_frame = ctk.CTkFrame(self.options_container, fg_color="transparent")
+        
+        self.start_time_entry = ctk.CTkEntry(
+            self.trim_frame, placeholder_text="00:00", width=60, height=35,
+            font=(APP_FONT, 12), border_width=1, border_color=C_INPUT_BORDER, fg_color=C_INPUT_BG, text_color=C_TEXT_MAIN
+        )
+        self.trim_sep = ctk.CTkLabel(self.trim_frame, text="-", text_color=C_TEXT_MAIN)
+        self.end_time_entry = ctk.CTkEntry(
+            self.trim_frame, placeholder_text="00:15", width=60, height=35,
+            font=(APP_FONT, 12), border_width=1, border_color=C_INPUT_BORDER, fg_color=C_INPUT_BG, text_color=C_TEXT_MAIN
+        )
+        self.start_time_entry.pack(side="left"); self.trim_sep.pack(side="left", padx=5); self.end_time_entry.pack(side="left")
+
+        # --- BINDING FOR AUTO-FORMATTING ---
+        # When user clicks away (FocusOut) or hits Enter (Return), formatting runs
+        self.start_time_entry.bind("<FocusOut>", lambda e: self.auto_format_time_field(self.start_time_entry))
+        self.start_time_entry.bind("<Return>", lambda e: self.auto_format_time_field(self.start_time_entry))
+        
+        self.end_time_entry.bind("<FocusOut>", lambda e: self.auto_format_time_field(self.end_time_entry))
+        self.end_time_entry.bind("<Return>", lambda e: self.auto_format_time_field(self.end_time_entry))
+        # -----------------------------------
+
         self.use_hb_var = ctk.BooleanVar(value=True)
         self.hb_checkbox = ctk.CTkCheckBox(
             self.options_container, text="Optimize (HandBrake)", variable=self.use_hb_var,
@@ -336,6 +385,23 @@ class ModernDownloaderApp(ctk.CTk):
         )
         self.download_btn.pack(fill="x", pady=(0, 15))
 
+    # --- NEW: AUTO FORMATTER LOGIC ---
+    def auto_format_time_field(self, entry_widget):
+        raw_text = entry_widget.get().strip()
+        if not raw_text: return
+        
+        # If user typed digits only (e.g. "90"), we treat it as seconds
+        # If user typed "1:30", parse_time handles that too
+        seconds = parse_time_to_seconds(raw_text)
+        formatted = format_seconds_to_str(seconds)
+        
+        # Update UI with clean format
+        entry_widget.delete(0, "end")
+        entry_widget.insert(0, formatted)
+        
+        # Move focus back to main window if Enter was pressed
+        self.focus_set()
+
     # --- THEMING ENGINE ---
     def change_theme(self, mode): ctk.set_appearance_mode(mode)
 
@@ -349,6 +415,7 @@ class ModernDownloaderApp(ctk.CTk):
         self.paste_btn.configure(fg_color=self.current_accent, hover_color=self.current_accent_hover)
         self.format_switch.configure(selected_color=self.current_accent, selected_hover_color=self.current_accent_hover)
         self.hb_checkbox.configure(hover_color=self.current_accent, fg_color=self.current_accent)
+        self.trim_checkbox.configure(hover_color=self.current_accent, fg_color=self.current_accent)
         self.progress_bar.configure(progress_color=self.current_accent)
 
     # --- UI LOGIC ---
@@ -356,10 +423,23 @@ class ModernDownloaderApp(ctk.CTk):
         state = "normal" if self.use_hb_var.get() else "disabled"
         self.hb_menu.configure(state=state)
 
+    def toggle_trim_inputs(self):
+        self.update_options_visibility(self.format_var.get())
+
     def update_options_visibility(self, choice):
         for w in self.options_container.winfo_children(): w.pack_forget()
-        if choice == "Audio Only": self.audio_fmt_menu.pack(side="left")
-        else: self.res_menu.pack(side="left", padx=(0, 15)); self.hb_checkbox.pack(side="left", padx=(0, 10)); self.hb_menu.pack(side="left")
+        
+        if choice == "Audio Only": 
+            self.audio_fmt_menu.pack(side="left")
+            self.trim_checkbox.pack(side="left", padx=(15, 10))
+            if self.trim_var.get(): self.trim_frame.pack(side="left", padx=(0, 15))
+        else: 
+            self.res_menu.pack(side="left", padx=(0, 15))
+            self.trim_checkbox.pack(side="left", padx=(0, 10))
+            if self.trim_var.get(): self.trim_frame.pack(side="left", padx=(0, 15))
+            
+            self.hb_checkbox.pack(side="left", padx=(0, 10))
+            self.hb_menu.pack(side="left")
 
     def clear_status(self, event=None):
         if not self.downloading: self.status_var.set(""); self.status_label.configure(text_color=C_TEXT_SUB)
@@ -398,18 +478,28 @@ class ModernDownloaderApp(ctk.CTk):
         folder = filedialog.askdirectory()
         if not folder: self.status_var.set(""); return
 
+        trim_on = self.trim_var.get()
+        t_start = self.start_time_entry.get() if trim_on else None
+        t_end = self.end_time_entry.get() if trim_on else None
+
         self.downloading = True
         self.download_btn.configure(text="STOP DOWNLOAD", fg_color=C_STOP, hover_color=C_STOP_HOVER, command=self.stop_process)
         self.progress_bar.pack(fill="x", pady=(0, 10), before=self.status_label)
         self.progress_bar.set(0)
         
-        self.format_switch.configure(state="disabled"); self.res_menu.configure(state="disabled"); self.hb_checkbox.configure(state="disabled"); self.hb_menu.configure(state="disabled"); self.audio_fmt_menu.configure(state="disabled")
+        self.format_switch.configure(state="disabled"); self.res_menu.configure(state="disabled"); 
+        self.hb_checkbox.configure(state="disabled"); self.hb_menu.configure(state="disabled"); 
+        self.audio_fmt_menu.configure(state="disabled"); self.trim_checkbox.configure(state="disabled")
         
-        threading.Thread(target=self.run_download_manager, args=(url, folder, self.format_var.get(), self.res_var.get(), self.audio_fmt_var.get(), self.use_hb_var.get(), self.hb_preset_var.get()), daemon=True).start()
+        threading.Thread(target=self.run_download_manager, 
+                         args=(url, folder, self.format_var.get(), self.res_var.get(), 
+                               self.audio_fmt_var.get(), self.use_hb_var.get(), 
+                               self.hb_preset_var.get(), trim_on, t_start, t_end), 
+                         daemon=True).start()
 
-    def run_download_manager(self, url, folder, mode, res, audio_fmt, use_hb, hb_preset):
+    def run_download_manager(self, url, folder, mode, res, audio_fmt, use_hb, hb_preset, trim_on, t_start, t_end):
         print("Attempting Direct Connection...")
-        status = self.run_download_task(url, folder, mode, res, audio_fmt, use_hb, hb_preset, proxy=None)
+        status = self.run_download_task(url, folder, mode, res, audio_fmt, use_hb, hb_preset, None, trim_on, t_start, t_end)
         
         if self.stop_event.is_set() or status == 0 or status == 2: return 
 
@@ -423,13 +513,13 @@ class ModernDownloaderApp(ctk.CTk):
             if not available: break 
             proxy_url = f"http://{random.choice(available)}"
             self.status_var.set(f"Retrying with Secure Proxy ({i+1}/{max_retries})...")
-            status = self.run_download_task(url, folder, mode, res, audio_fmt, use_hb, hb_preset, proxy=proxy_url)
+            status = self.run_download_task(url, folder, mode, res, audio_fmt, use_hb, hb_preset, proxy_url, trim_on, t_start, t_end)
             if status == 0 or status == 2: return 
             time.sleep(1)
 
         if not self.stop_event.is_set(): self.finish_fail("Connection failed. Try again later.")
 
-    def run_download_task(self, url, folder, mode, res_text, audio_fmt, use_hb, hb_preset, proxy):
+    def run_download_task(self, url, folder, mode, res_text, audio_fmt, use_hb, hb_preset, proxy, trim_on, t_start, t_end):
         temp_filename = f"temp_{int(time.time())}"
         def progress_hook(d):
             if self.stop_event.is_set(): raise Exception("Stopped")
@@ -447,6 +537,14 @@ class ModernDownloaderApp(ctk.CTk):
             "progress_hooks": [progress_hook], "quiet": True, "noplaylist": True, "socket_timeout": 20, "retries": 3,
             "ffmpeg_location": self.ffmpeg_path
         }
+        
+        if trim_on and t_start and t_end:
+            s_sec = parse_time_to_seconds(t_start)
+            e_sec = parse_time_to_seconds(t_end)
+            if e_sec > s_sec:
+                ydl_opts['download_ranges'] = download_range_func(None, [(s_sec, e_sec)])
+                ydl_opts['force_keyframes_at_cuts'] = True 
+        
         if proxy: ydl_opts["proxy"] = proxy
 
         if mode == "Audio Only":
@@ -540,6 +638,7 @@ class ModernDownloaderApp(ctk.CTk):
         self.download_btn.configure(text="START DOWNLOAD", fg_color=self.current_accent, hover_color=self.current_accent_hover, command=self.initiate_download)
         self.format_switch.configure(state="normal"); self.res_menu.configure(state="normal")
         self.hb_checkbox.configure(state="normal"); self.toggle_hb_menu()
+        self.trim_checkbox.configure(state="normal"); self.toggle_trim_inputs()
         self.audio_fmt_menu.configure(state="normal"); self.update_options_visibility(self.format_var.get())
 
 if __name__ == "__main__":
