@@ -74,7 +74,7 @@ class DownloaderMixin:
 
         if height_limit: ydl_opts["format"] = f"bestvideo[height<={height_limit}]+bestaudio/best[height<={height_limit}]/best"
         else: ydl_opts["format"] = "bestvideo+bestaudio/best"
-        ydl_opts["merge_output_format"] = "mkv"
+        ydl_opts["merge_output_format"] = "mp4"
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
