@@ -7,8 +7,8 @@ let childProcess = null; // Global variable to store the running Python process
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1050,
-    height: 700,
+    width: 850,
+    height: 850,
     title: "Universal Downloader",
     webPreferences: {
       nodeIntegration: true,
