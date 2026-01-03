@@ -40,6 +40,14 @@
                 </select>
             </div>
 
+            <div class="option-card row-card" id="hb-card">
+                <div class="card-label">OPTIMIZE</div>
+                <label class="switch">
+                    <input type="checkbox" id="chk-hb">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+
             <div class="option-card" id="audio-fmt-card" style="display: none;">
                 <div class="card-label">FORMAT</div>
                 <select id="audio-fmt" class="card-select">
@@ -50,26 +58,22 @@
                 </select>
             </div>
 
-            <div class="option-card row-card" id="hb-card">
-                <div class="card-label">OPTIMIZE</div>
-                <label class="switch">
-                    <input type="checkbox" id="chk-hb">
-                    <span class="slider round"></span>
-                </label>
-            </div>
-
-            <div class="option-card row-card">
+            <div class="option-card row-card" id="trim-card">
                 <div class="card-label">CUT / TRIM</div>
+
                 <label class="switch">
                     <input type="checkbox" id="chk-trim">
                     <span class="slider round"></span>
                 </label>
             </div>
 
-            <div class="trim-inputs" id="trim-box">
-                <input type="text" id="t-start" class="time-field" placeholder="00:00">
-                <span>-</span>
-                <input type="text" id="t-end" class="time-field" placeholder="00:15">
+            <div class="option-card" id="trim-inputs-card" style="display: none;">
+                <div class="card-label">TRIM TIMES</div>
+                <div class="trim-inputs">
+                    <input type="text" id="t-start" class="time-field" placeholder="00:00">
+                    <span>-</span>
+                    <input type="text" id="t-end" class="time-field" placeholder="00:15">
+                </div>
             </div>
 
             <div class="option-card full-width" id="hb-preset-card" style="display: none;">

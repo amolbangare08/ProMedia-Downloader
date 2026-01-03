@@ -6,7 +6,7 @@ const urlInput = el('url');
 const qualityCard = el('quality-card');
 const audioFmtCard = el('audio-fmt-card');
 const trimCheck = el('chk-trim');
-const trimBox = el('trim-box');
+const trimInputsCard = el('trim-inputs-card');
 const hbCheck = el('chk-hb');
 const hbCard = el('hb-card');
 const hbPresetCard = el('hb-preset-card');
@@ -50,7 +50,7 @@ function updateVisibility() {
 
 // --- 2. OPTION TOGGLES ---
 trimCheck.addEventListener('change', () => {
-    trimBox.style.display = trimCheck.checked ? 'flex' : 'none';
+    trimInputsCard.style.display = trimCheck.checked ? 'block' : 'none';
 });
 
 hbCheck.addEventListener('change', () => {

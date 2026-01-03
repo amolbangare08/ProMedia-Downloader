@@ -229,17 +229,13 @@ h1 { margin: 0; font-size: 30px; font-weight: 700; }
   transform: translateX(16px);
 }
 
-/* --- TRIM INPUTS (Updated to fit Grid) --- */
+
+/* --- TRIM INPUTS --- */
 .trim-inputs {
-    grid-column: span 2; /* Span full width */
-    display: none; /* Toggled by JS */
+    display: flex;
     justify-content: center;
     align-items: center;
     gap: 10px;
-    background-color: var(--input-bg);
-    padding: 10px;
-    border-radius: 12px;
-    border: 1px solid var(--input-border);
 }
 
 /* --- TRIM INPUT STYLING --- */
@@ -325,3 +321,4 @@ h1 { margin: 0; font-size: 30px; font-weight: 700; }
 }
 .btn-main:hover { background-color: var(--accent-hover); }
 .btn-main.stop { background-color: var(--danger); }
+
