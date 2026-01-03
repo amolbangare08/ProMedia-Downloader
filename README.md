@@ -30,6 +30,19 @@ As a video editor, downloading clips from random sites often results in **VFR (V
 
 ---
 
+## 🌐 Supported Platforms
+
+- Windows
+- macOS
+- Linux
+
+## 📺 Supported Sites
+
+- YouTube
+- More coming soon...
+
+---
+
 ## 🛠️ Tech Stack
 
 This project uses a hybrid architecture:
@@ -40,6 +53,8 @@ This project uses a hybrid architecture:
 ---
 
 ## 📥 Installation & Setup
+
+For quick setup, download the latest executable from the [Releases](https://github.com/amolbangare08/Universal-Downloader/releases) page, or follow the installation steps below.
 
 Since this is a hybrid app, you need to set up both the Python environment and the Node.js environment.
 
@@ -165,7 +180,7 @@ License: MIT
 If you find this project useful, consider supporting its development!
 
 **Bitcoin:** 🪙 ```
- 1FVP7EdQZ4GmDpv4VvZUBUMm3B5MLLq2P3```
+1FVP7EdQZ4GmDpv4VvZUBUMm3B5MLLq2P3```
 
 ---
 
