@@ -2,8 +2,6 @@
 
 **The High-Fidelity Universal Media Downloader & VFR Converter for Video Editors.**
 
-> **New Architecture:** Now featuring a beautiful **Electron** frontend powered by a robust **Python** backend.
-
 ![App Screenshot](screenshot.png)
 
 ## 🚀 Why Use This?
