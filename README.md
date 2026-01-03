@@ -1,21 +1,21 @@
-# ProMedia Downloader 🎬
+# Universal Downloader 🎬
 
-**The High-Fidelity YouTube Downloader & VFR Converter for Video Editors.**
+**The High-Fidelity Universal Media Downloader & VFR Converter for Video Editors.**
 
 ![App Screenshot](screenshot.png)
 
-**Fix YouTube glitches in Premiere Pro & DaVinci Resolve automatically.**
-> *Keywords: YouTube to MP4 4K, Fix VFR Audio Sync, HandBrake Automation, Variable Frame Rate Fix, Premiere Pro Glitch Fix.*
+**Fix media glitches in Premiere Pro & DaVinci Resolve automatically.**
+> *Keywords: Universal Media to MP4 4K, Fix VFR Audio Sync, HandBrake Automation, Variable Frame Rate Fix, Premiere Pro Glitch Fix.*
 
 ## 🛑 The Problem: "Why does my footage glitch?"
 As a video editor, you know the pain:
-1. You download a clip from YouTube using a random website.
+1. You download a clip from online platforms using a random website.
 2. It plays fine in VLC, but **glitches, lags, or de-syncs** when imported into **Adobe Premiere Pro** or **DaVinci Resolve**.
 3. **The Cause:** YouTube videos use **VFR (Variable Frame Rate)** to save data. Professional NLEs require **CFR (Constant Frame Rate)** to edit smoothly.
 4. **The Old Fix:** You had to manually waste time converting every clip through HandBrake before editing.
 
 ## ✅ The Solution: "One Click, Edit Ready"
-**ProMedia Downloader** automates the entire workflow. It downloads the highest bitrate stream and **automatically passes it through the HandBrake engine** in the background.
+**Universal Downloader** automates the entire workflow. It downloads the highest bitrate stream and **automatically passes it through the HandBrake engine** in the background.
 
 **The Result:** You get a buttery smooth, edit-ready **MP4 (H.264, CFR)** file that works perfectly in Premiere Pro, DaVinci Resolve, After Effects, and Sony Vegas. No manual transcoding required.
 
@@ -27,14 +27,18 @@ As a video editor, you know the pain:
 - **Cross-Platform:** Native Windows App (.exe) or run via Python on Linux/macOS.
 - **Modern UI:** Professional Dark/Light themes that sync with your system accent color.
 
+## 📺 Supported Platforms
+- **YouTube** - Full support for videos and audio extraction
+- More platforms coming soon!
+
 ---
 
 ## 🚀 How to Install
 
 ### 🔹 Option 1: The Easy Way (Windows Only)
 *Best for editors who just want it to work.*
-1. Go to the [**Releases Page**](https://github.com/amolbangare08/ProMedia-Downloader/releases).
-2. Download the latest `ProMedia.Downloader.exe`.
+1. Go to the [**Releases Page**](https://github.com/amolbangare08/Universal-Downloader/releases).
+2. Download the latest `Universal-Downloader.exe`.
 3. Run the app. (FFmpeg and HandBrake engines will be downloaded automatically on the first run).
 
 ### 🔹 Option 2: Run from Source (Windows, Linux, macOS)
@@ -44,8 +48,8 @@ As a video editor, you know the pain:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/amolbangare08/ProMedia-Downloader.git
-   cd ProMedia-Downloader
+   git clone https://github.com/amolbangare08/Universal-Downloader.git
+   cd Universal-Downloader
 
 
 
@@ -57,8 +61,8 @@ pip install -r requirements.txt
 
 
 3. **Run the script:**
-* **Windows:** `python youtube_downloader.py`
-* **Linux/Mac:** `python3 youtube_downloader.py`
+* **Windows:** `python universal_downloader.py`
+* **Linux/Mac:** `python3 universal_downloader.py`
 
 
 
