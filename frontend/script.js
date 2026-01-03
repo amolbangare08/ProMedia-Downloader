@@ -124,8 +124,6 @@ btnDownload.addEventListener('click', () => {
 
     const url = urlInput.value.trim();
     if (!url) {
-        statusText.innerText = "Please enter a valid URL";
-        statusText.style.color = "var(--danger)";
         return;
     }
 
@@ -135,8 +133,8 @@ btnDownload.addEventListener('click', () => {
     btnDownload.classList.add('stop');
     progressContainer.style.display = 'block';
     progressFill.style.width = '0%';
-    statusText.innerText = "Select folder...";
-    statusText.style.color = "var(--text-sub)";
+    statusText.innerText = "Initializing...";
+    statusText.style.color = "var(--success)";
 
     // Prepare Data Packet
     // Map internal mode names to what Python expects
@@ -166,34 +164,39 @@ ipcRenderer.on('python-output', (event, msg) => {
         const percent = msg.data * 100;
         progressFill.style.width = percent + '%';
         statusText.innerText = msg.text || `Downloading... ${Math.round(percent)}%`;
-    } 
+    }
     else if (msg.type === 'success') {
         statusText.innerText = "Download Complete!";
         statusText.style.color = "var(--success)";
         resetUI();
+        setTimeout(() => { statusText.innerText = ""; }, 7000);
     }
     else if (msg.type === 'error') {
         statusText.innerText = "Error: " + msg.data;
         statusText.style.color = "var(--danger)";
         resetUI();
+        setTimeout(() => { statusText.innerText = ""; }, 7000);
     }
 });
 
 ipcRenderer.on('download-canceled', () => {
     statusText.innerText = "Download canceled";
     resetUI();
+    setTimeout(() => { statusText.innerText = ""; }, 7000);
 });
 
 ipcRenderer.on('download-stopped', () => {
     statusText.innerText = "Download Stopped";
     statusText.style.color = "var(--text-sub)";
     resetUI();
+    setTimeout(() => { statusText.innerText = ""; }, 7000);
 });
 
 function resetUI() {
     isDownloading = false;
     btnDownload.innerText = "START DOWNLOAD";
     btnDownload.classList.remove('stop');
+    progressContainer.style.display = 'none';
 }
 
 // Initial Run

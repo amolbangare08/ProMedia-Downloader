@@ -13,7 +13,6 @@ from core import *
 
 class DownloaderMixin:
     def run_download_manager(self, url, folder, mode, res, audio_fmt, use_hb, hb_preset, trim_on, t_start, t_end):
-        print("Attempting Direct Connection...")
         # 1. Run the task directly (Proxy = None)
         status = self.run_download_task(url, folder, mode, res, audio_fmt, use_hb, hb_preset, None, trim_on, t_start, t_end)
         

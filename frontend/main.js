@@ -27,26 +27,22 @@ app.on('window-all-closed', () => {
 
 // --- START DOWNLOAD ---
 ipcMain.on('start-download', async (event, args) => {
-  console.log('Received start-download:', args);
   const { url, mode, res, audio_fmt, use_hb, hb_preset, trim_on, t_start, t_end } = args;
 
   const scriptPath = path.join(__dirname, '..', 'backend', 'cli.py');
 
   // 1. Select Folder
-  console.log('Showing folder dialog');
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openDirectory'],
     title: 'Select Download Folder'
   });
-  
+
   if (result.canceled) {
-    console.log('Dialog canceled');
     mainWindow.webContents.send('download-canceled');
     return;
   }
-  
+
   const folder = result.filePaths[0];
-  console.log('Selected folder:', folder);
 
   // 2. Prepare Arguments
   const cliArgs = [
@@ -66,14 +62,12 @@ ipcMain.on('start-download', async (event, args) => {
     cliArgs.push('--trim_end', t_end);
   }
 
-  console.log("Running:", 'python', cliArgs.join(' '));
-
   // 3. Spawn Python (Assign to global variable)
   // Ensure we kill any existing process first
   if (childProcess) {
     try { childProcess.kill(); } catch(e){}
   }
-  
+
   childProcess = spawn('python', cliArgs);
 
   // 4. Listen for Output (FIXED: Uses 'childProcess' instead of 'child')
@@ -85,7 +79,7 @@ ipcMain.on('start-download', async (event, args) => {
         const json = JSON.parse(line);
         mainWindow.webContents.send('python-output', json);
       } catch (e) {
-        console.log("Raw Output:", line);
+        // Ignore non-JSON output
       }
     });
   });
@@ -93,19 +87,16 @@ ipcMain.on('start-download', async (event, args) => {
   childProcess.stderr.on('data', (data) => {
     console.error(`Python Error: ${data}`);
   });
-  
+
   childProcess.on('close', (code) => {
-      console.log(`Process exited with code ${code}`);
       childProcess = null;
   });
 });
 
 // --- STOP DOWNLOAD ---
 ipcMain.on('stop-download', () => {
-    console.log('Received stop-download request');
     if (childProcess) {
-        console.log('Killing child process...');
-        childProcess.kill(); 
+        childProcess.kill();
         childProcess = null;
     }
     mainWindow.webContents.send('download-stopped');

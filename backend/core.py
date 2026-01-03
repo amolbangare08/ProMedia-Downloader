@@ -121,7 +121,6 @@ def format_seconds_to_str(seconds):
         return f"{h:02d}:{m:02d}:{s:02d}"
 
 def check_tool_dependencies():
-    print("-" * 50); print("SYSTEM INITIALIZATION..."); print("-" * 50)
     cwd = os.getcwd()
     ffmpeg_path = os.path.join(cwd, "ffmpeg.exe")
     handbrake_path = os.path.join(cwd, "HandBrakeCLI.exe")
