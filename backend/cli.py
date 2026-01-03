@@ -2,19 +2,23 @@ import argparse
 import json
 import sys
 import os
+
+# Ensure we can import from the same directory
+sys.path.append(os.path.dirname(__file__))
+
 from core import *
 from downloaders import DownloaderMixin
 
-# Mock class to replace the Tkinter UI "self"
 class HeadlessDownloader(DownloaderMixin):
     def __init__(self):
+        # 1. Mock the Stop Event
         self.stop_event = type('obj', (object,), {'is_set': lambda: False})
+        
+        # 2. Setup Paths (Same as before)
         self.ffmpeg_path = "./ffmpeg.exe" if os.path.exists("./ffmpeg.exe") else "ffmpeg"
         self.handbrake_path = "./HandBrakeCLI.exe" if os.path.exists("./HandBrakeCLI.exe") else "HandBrakeCLI"
         
-        # Determine actual paths for binaries
         if not os.path.exists(self.ffmpeg_path):
-             # Try looking in the same folder as this script
              local_ff = os.path.join(os.path.dirname(__file__), "ffmpeg.exe")
              if os.path.exists(local_ff): self.ffmpeg_path = local_ff
 
@@ -22,42 +26,62 @@ class HeadlessDownloader(DownloaderMixin):
              local_hb = os.path.join(os.path.dirname(__file__), "HandBrakeCLI.exe")
              if os.path.exists(local_hb): self.handbrake_path = local_hb
 
-    # Override UI updates to print JSON instead
-    class MockVar:
-        def set(self, val): pass # We don't use the Tkinter vars
-    
-    class MockBar:
-        def set(self, val): pass
+    # --- THE SMART MOCKS ---
+    # These classes trick 'downloaders.py' into thinking it's updating a UI,
+    # but actually, they print JSON to the console for Electron to read.
+
+    class MockProgressBar:
+        def __init__(self):
+            self._val = 0.0
+        
+        def set(self, val):
+            self._val = float(val)
+            # THE FIX: Print JSON whenever progress changes!
+            # This sends the update to Electron immediately.
+            print(json.dumps({"type": "progress", "data": self._val}), flush=True)
+
+        def get(self):
+            return self._val
+        
+        # Dummy methods to prevent crashes
         def configure(self, **kwargs): pass
         def start(self): pass
         def stop(self): pass
-        def get(self): return 0
 
+    class MockStatusVar:
+        def __init__(self, progress_bar_ref):
+            self.pb = progress_bar_ref
+
+        def set(self, val):
+            # When Python sets status text (e.g. "Processing..."), sends it to Electron
+            # We attach the current progress value so the bar doesn't jump to 0
+            print(json.dumps({
+                "type": "progress", 
+                "data": self.pb.get(), 
+                "text": str(val)
+            }), flush=True)
+
+    # --- UI COMPATIBILITY ---
+    # These dummy methods prevent crashes when downloaders.py tries to update buttons
     def after(self, delay, func): 
-        # In headless mode, we just run the 'finish' function immediately
-        func()
+        func() # Run immediately
 
-    # The Core "Emit" Function
     def emit_status(self, type, data):
         print(json.dumps({"type": type, "data": data}), flush=True)
 
-    # Override the progress hook from your original code
-    def progress_hook(self, d):
-        if d["status"] == "downloading" and d.get("total_bytes"):
-            percent = d["downloaded_bytes"] / d["total_bytes"]
-            self.emit_status("progress", percent)
-            
-    # Override finish methods to just emit JSON
     def finish_success(self):
         self.emit_status("success", "Download Complete")
     
     def finish_fail(self, message):
         self.emit_status("error", message)
 
-    # Redefine the task runner to use our emit_status
+    # --- MAIN RUNNER ---
     def run_headless(self, args):
-        self.status_var = self.MockVar()
-        self.progress_bar = self.MockBar()
+        # 1. Initialize Smart Mocks
+        self.progress_bar = self.MockProgressBar()
+        self.status_var = self.MockStatusVar(self.progress_bar)
+        
+        # 2. Mock other UI elements referenced in downloaders.py (Passive mocks)
         self.status_label = type('obj', (object,), {'configure': lambda **k: None})
         self.download_btn = type('obj', (object,), {'configure': lambda **k: None})
         self.format_switch = type('obj', (object,), {'configure': lambda **k: None})
@@ -66,7 +90,7 @@ class HeadlessDownloader(DownloaderMixin):
         self.trim_checkbox = type('obj', (object,), {'configure': lambda **k: None})
         self.audio_fmt_menu = type('obj', (object,), {'configure': lambda **k: None})
         
-        # Map CLI args to your original function arguments
+        # 3. Run the shared logic from downloaders.py
         self.run_download_manager(
             url=args.url,
             folder=args.folder,
@@ -95,20 +119,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     
-    app = HeadlessDownloader()
-    
-    # Monkey-patch the progress hook in the mixin to use our JSON emitter
-    # (This is a trick to avoid rewriting downloaders.py entirely)
-    def json_progress_hook(d):
-        if d["status"] == "downloading" and d.get("total_bytes"):
-            percent = d["downloaded_bytes"] / d["total_bytes"]
-            print(json.dumps({"type": "progress", "data": percent, "text": f"{int(percent*100)}%"}), flush=True)
-        elif d["status"] == "finished":
-            print(json.dumps({"type": "status", "data": "Processing conversion..."}), flush=True)
-
-    # We inject this hook into the options inside run_download_task logic
-    # But for now, let's rely on the main class logic running.
     try:
+        app = HeadlessDownloader()
         app.run_headless(args)
     except Exception as e:
         print(json.dumps({"type": "error", "data": str(e)}), flush=True)

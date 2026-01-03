@@ -3,11 +3,11 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 let mainWindow;
-let childProcess = null;
+let childProcess = null; // Global variable to store the running Python process
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 800,
+    width: 1050,
     height: 700,
     title: "Universal Downloader",
     webPreferences: {
@@ -25,29 +25,30 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// --- THE BRIDGE ---
+// --- START DOWNLOAD ---
 ipcMain.on('start-download', async (event, args) => {
   console.log('Received start-download:', args);
   const { url, mode, res, audio_fmt, use_hb, hb_preset, trim_on, t_start, t_end } = args;
 
-  // 1. Path to Python Script (Step out of 'frontend' into 'backend')
   const scriptPath = path.join(__dirname, '..', 'backend', 'cli.py');
 
-  // 2. Ask for Download Folder
+  // 1. Select Folder
   console.log('Showing folder dialog');
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openDirectory'],
     title: 'Select Download Folder'
   });
-  console.log('Dialog result:', result);
+  
   if (result.canceled) {
-    console.log('Dialog canceled, sending canceled event');
+    console.log('Dialog canceled');
     mainWindow.webContents.send('download-canceled');
     return;
   }
+  
   const folder = result.filePaths[0];
+  console.log('Selected folder:', folder);
 
-  // 3. Build Arguments
+  // 2. Prepare Arguments
   const cliArgs = [
     scriptPath,
     url,
@@ -67,11 +68,16 @@ ipcMain.on('start-download', async (event, args) => {
 
   console.log("Running:", 'python', cliArgs.join(' '));
 
-  // 4. Spawn Python
+  // 3. Spawn Python (Assign to global variable)
+  // Ensure we kill any existing process first
+  if (childProcess) {
+    try { childProcess.kill(); } catch(e){}
+  }
+  
   childProcess = spawn('python', cliArgs);
 
-  // 5. Forward Output to UI
-  child.stdout.on('data', (data) => {
+  // 4. Listen for Output (FIXED: Uses 'childProcess' instead of 'child')
+  childProcess.stdout.on('data', (data) => {
     const lines = data.toString().split('\n');
     lines.forEach(line => {
       if (!line.trim()) return;
@@ -79,27 +85,28 @@ ipcMain.on('start-download', async (event, args) => {
         const json = JSON.parse(line);
         mainWindow.webContents.send('python-output', json);
       } catch (e) {
-        console.log("Raw:", line);
+        console.log("Raw Output:", line);
       }
     });
   });
 
   childProcess.stderr.on('data', (data) => {
-    console.error(`Error: ${data}`);
-    // Don't send stderr to UI to avoid showing logs
+    console.error(`Python Error: ${data}`);
   });
-
-  childProcess.on('close', () => {
-    childProcess = null;
+  
+  childProcess.on('close', (code) => {
+      console.log(`Process exited with code ${code}`);
+      childProcess = null;
   });
 });
 
 // --- STOP DOWNLOAD ---
 ipcMain.on('stop-download', () => {
-  console.log('Received stop-download');
-  if (childProcess) {
-    console.log('Killing child process');
-    childProcess.kill();
+    console.log('Received stop-download request');
+    if (childProcess) {
+        console.log('Killing child process...');
+        childProcess.kill(); 
+        childProcess = null;
+    }
     mainWindow.webContents.send('download-stopped');
-  }
 });

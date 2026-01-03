@@ -2,15 +2,26 @@ const { ipcRenderer } = require('electron');
 
 // --- ELEMENTS ---
 const el = (id) => document.getElementById(id);
+
+// 1. Inputs (Values)
 const urlInput = el('url');
+const qualitySelect = el('quality');      // The dropdown
+const audioFmtSelect = el('audio-fmt');   // The dropdown
+const hbPresetSelect = el('hb-preset');   // <--- FIXED: Added this definition
+
+// 2. Toggles & Buttons
+const trimCheck = el('chk-trim');
+const hbCheck = el('chk-hb');
+const btnDownload = el('btn-download');
+
+// 3. Cards/Containers (For showing/hiding)
 const qualityCard = el('quality-card');
 const audioFmtCard = el('audio-fmt-card');
-const trimCheck = el('chk-trim');
-const trimInputsCard = el('trim-inputs-card');
-const hbCheck = el('chk-hb');
 const hbCard = el('hb-card');
 const hbPresetCard = el('hb-preset-card');
-const btnDownload = el('btn-download');
+const trimInputsCard = el('trim-inputs-card');
+
+// 4. Status Elements
 const statusText = el('status');
 const progressFill = el('progress-fill');
 const progressContainer = el('progress-container');
@@ -19,7 +30,7 @@ const progressContainer = el('progress-container');
 let currentMode = 'video_audio';
 let isDownloading = false;
 
-// --- 1. MODE SWITCHING (The Segmented Control) ---
+// --- 1. MODE SWITCHING ---
 document.querySelectorAll('.segment-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         // Visual Update
@@ -34,38 +45,45 @@ document.querySelectorAll('.segment-btn').forEach(btn => {
 
 function updateVisibility() {
     if (currentMode === 'audio_only') {
-        qualityCard.style.display = 'none';
-        audioFmtCard.style.display = 'flex'; // Use flex for cards
-        hbCard.style.display = 'none';
-        hbPresetCard.style.display = 'none';
+        // Audio Mode
+        if(qualityCard) qualityCard.style.display = 'none';
+        if(audioFmtCard) audioFmtCard.style.display = 'flex'; 
+        if(hbCard) hbCard.style.display = 'none';
+        if(hbPresetCard) hbPresetCard.style.display = 'none';
     } else {
-        qualityCard.style.display = 'flex';
-        audioFmtCard.style.display = 'none';
-        hbCard.style.display = 'flex';
-
-        // Check checkbox state for preset
-        hbPresetCard.style.display = hbCheck.checked ? 'flex' : 'none';
+        // Video Modes
+        if(qualityCard) qualityCard.style.display = 'flex';
+        if(audioFmtCard) audioFmtCard.style.display = 'none';
+        if(hbCard) hbCard.style.display = 'flex';
+        
+        // Only show preset if Handbrake is CHECKED
+        if(hbPresetCard) {
+            hbPresetCard.style.display = hbCheck.checked ? 'flex' : 'none';
+        }
     }
 }
 
 // --- 2. OPTION TOGGLES ---
-trimCheck.addEventListener('change', () => {
-    trimInputsCard.style.display = trimCheck.checked ? 'block' : 'none';
-});
+if (trimCheck) {
+    trimCheck.addEventListener('change', () => {
+        if(trimInputsCard) trimInputsCard.style.display = trimCheck.checked ? 'block' : 'none';
+    });
+}
 
-hbCheck.addEventListener('change', () => {
-    hbPresetCard.style.display = hbCheck.checked ? 'flex' : 'none';
-});
+if (hbCheck) {
+    hbCheck.addEventListener('change', () => {
+        if(hbPresetCard) hbPresetCard.style.display = hbCheck.checked ? 'flex' : 'none';
+    });
+}
 
-// --- 3. TIME AUTO-FORMATTER (The "Smart" Feature) ---
-// Matches python's format_seconds_to_str logic
+// --- 3. TIME AUTO-FORMATTER ---
 function formatTime(input) {
     const val = input.value.trim();
     if (!val) return;
 
     let seconds = 0;
     if (/^\d+$/.test(val)) {
-        seconds = parseInt(val); // User typed "90" -> 90s
+        seconds = parseInt(val);
     } else if (val.includes(':')) {
         const parts = val.split(':').map(Number);
         if (parts.length === 2) seconds = parts[0] * 60 + parts[1];
@@ -74,7 +92,6 @@ function formatTime(input) {
         return;
     }
 
-    // Convert back to MM:SS or HH:MM:SS
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = seconds % 60;
@@ -97,11 +114,10 @@ el('btn-paste').addEventListener('click', async () => {
     urlInput.value = text;
 });
 
-// --- 5. START DOWNLOAD (Sending data to Main) ---
+// --- 5. START DOWNLOAD ---
 btnDownload.addEventListener('click', () => {
-    console.log('Download button clicked, isDownloading:', isDownloading);
+    // STOP LOGIC
     if (isDownloading) {
-        console.log('Sending stop signal');
         ipcRenderer.send('stop-download');
         return;
     }
@@ -119,35 +135,38 @@ btnDownload.addEventListener('click', () => {
     btnDownload.classList.add('stop');
     progressContainer.style.display = 'block';
     progressFill.style.width = '0%';
-    statusText.innerText = "Initializing...";
+    statusText.innerText = "Select folder...";
     statusText.style.color = "var(--text-sub)";
 
     // Prepare Data Packet
+    // Map internal mode names to what Python expects
+    let pythonMode = "Video + Audio";
+    if (currentMode === 'video_only') pythonMode = "Video Only";
+    if (currentMode === 'audio_only') pythonMode = "Audio Only";
+
     const args = {
         url: url,
-        mode: currentMode === 'video_audio' ? 'Video + Audio' : (currentMode === 'video_only' ? 'Video Only' : 'Audio Only'),
-        folder: "", // Logic for folder dialog will be added
+        mode: pythonMode,
         res: qualitySelect.value,
         audio_fmt: audioFmtSelect.value,
         use_hb: hbCheck.checked,
-        hb_preset: hbPreset.value,
+        hb_preset: hbPresetSelect.value, // <--- FIXED: Now uses the defined variable
         trim_on: trimCheck.checked,
         t_start: el('t-start').value,
         t_end: el('t-end').value
     };
 
-    // Send to main process
+    console.log("Sending to main:", args);
     ipcRenderer.send('start-download', args);
 });
 
-// --- 6. RECEIVE UPDATES ---
+// --- 6. LISTENERS ---
 ipcRenderer.on('python-output', (event, msg) => {
-    console.log('Received python-output:', msg);
     if (msg.type === 'progress') {
         const percent = msg.data * 100;
         progressFill.style.width = percent + '%';
         statusText.innerText = msg.text || `Downloading... ${Math.round(percent)}%`;
-    }
+    } 
     else if (msg.type === 'success') {
         statusText.innerText = "Download Complete!";
         statusText.style.color = "var(--success)";
@@ -161,12 +180,11 @@ ipcRenderer.on('python-output', (event, msg) => {
 });
 
 ipcRenderer.on('download-canceled', () => {
-    console.log('Download canceled');
+    statusText.innerText = "Download canceled";
     resetUI();
 });
 
 ipcRenderer.on('download-stopped', () => {
-    console.log('Download stopped');
     statusText.innerText = "Download Stopped";
     statusText.style.color = "var(--text-sub)";
     resetUI();
@@ -176,7 +194,6 @@ function resetUI() {
     isDownloading = false;
     btnDownload.innerText = "START DOWNLOAD";
     btnDownload.classList.remove('stop');
-    // progressContainer.style.display = 'none'; // Optional: keep it shown on success
 }
 
 // Initial Run
