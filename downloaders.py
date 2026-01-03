@@ -53,10 +53,10 @@ class DownloaderMixin:
             "ffmpeg_location": self.ffmpeg_path
         }
         
-        if trim_on and t_start and t_end:
-            s_sec = parse_time_to_seconds(t_start)
-            e_sec = parse_time_to_seconds(t_end)
-            if e_sec > s_sec:
+        if trim_on:
+            s_sec = parse_time_to_seconds(t_start) if t_start else 0
+            e_sec = parse_time_to_seconds(t_end) if t_end else None
+            if e_sec is not None and e_sec > s_sec:
                 ydl_opts['download_ranges'] = download_range_func(None, [(s_sec, e_sec)])
                 ydl_opts['force_keyframes_at_cuts'] = True 
         
