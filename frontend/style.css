@@ -60,6 +60,7 @@ body {
     /* Responsive Width Logic */
     width: 90%;
     max-width: 650px;
+    height: 650px;
 
     display: flex;
     flex-direction: column;
