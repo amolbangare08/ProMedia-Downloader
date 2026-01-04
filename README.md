@@ -39,14 +39,21 @@ As a video editor, downloading clips from random sites often results in **VFR (V
 ## 📺 Supported Platforms
 
 - **YouTube:** 4K Videos, Shorts, Live Streams, Playlists
-- **Instagram:** Reels, Video Posts, IGTV
-- **TikTok:** Videos (No Watermark)
-- **Facebook:** Watch, Reels, Public Videos
+- **Twitch:** Clips & VODs
+- **TikTok:** Downloads without watermark automatically
+- **Instagram:** Reels & Videos
+- **Facebook:** Watch, Reels, & Public Videos
+- **Reddit:** Videos & GIFs merged with audio
+- **Vimeo:** HD Videos
+- **Dailymotion:** HD Videos
+- **Bilibili:** Videos
+- **Rutube:** Videos
+- **VK:** Video
+- **BBC iPlayer:** Videos
+- **LinkedIn:** Video posts & Learning courses
+- **9GAG:** Videos
 - **Twitter (X):** Video Tweets
-- **Twitch:** Clips, VODs (Past Broadcasts)
-- **Reddit:** Videos, GIFs (Merged with Audio)
 - **SoundCloud:** High-Quality Audio
-- **Vimeo & Dailymotion:** HD Videos
 - **Pornhub:** Videos
 
 ---
