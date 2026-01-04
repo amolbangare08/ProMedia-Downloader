@@ -36,10 +36,10 @@ As a video editor, downloading clips from random sites often results in **VFR (V
 - macOS
 - Linux
 
-## 📺 Supported Sites
+## 📺 Supported Platforms
 
-- YouTube
-- More coming soon...
+- **YouTube:** Videos, Shorts, Live streams
+- **Instagram:** Reels, Video Posts, IGTV Videos
 
 ---
 
@@ -113,7 +113,7 @@ The application window should appear.
 
 ## 🎮 How to Use
 
-- **Paste URL:** Copy a YouTube (or supported site) link and click **PASTE**.
+- **Paste URL:** Copy a YouTube or Instagram link and click **PASTE**.
 - **Select Mode:**
   - **Video + Audio:** Standard video download.
   - **Video Only:** Good for stock footage (no sound).
