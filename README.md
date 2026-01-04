@@ -38,8 +38,15 @@ As a video editor, downloading clips from random sites often results in **VFR (V
 
 ## 📺 Supported Platforms
 
-- **YouTube:** Videos, Shorts, Live streams
-- **Instagram:** Reels, Video Posts, IGTV Videos
+- **YouTube:** 4K Videos, Shorts, Live Streams, Playlists
+- **Instagram:** Reels, Video Posts, IGTV
+- **TikTok:** Videos (No Watermark)
+- **Facebook:** Watch, Reels, Public Videos
+- **Twitter (X):** Video Tweets
+- **Twitch:** Clips, VODs (Past Broadcasts)
+- **Reddit:** Videos, GIFs (Merged with Audio)
+- **SoundCloud:** High-Quality Audio
+- **Vimeo & Dailymotion:** HD Videos
 
 ---
 
