@@ -47,6 +47,7 @@ As a video editor, downloading clips from random sites often results in **VFR (V
 - **Reddit:** Videos, GIFs (Merged with Audio)
 - **SoundCloud:** High-Quality Audio
 - **Vimeo & Dailymotion:** HD Videos
+- **Pornhub:** Videos
 
 ---
 
