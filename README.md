@@ -47,7 +47,7 @@ As a video editor, downloading clips from random sites often results in **VFR (V
 - **Vimeo:** HD Videos
 - **Dailymotion:** HD Videos
 - **Bilibili:** Videos
-- **Rutube:** Videos
+- **Rutube:** Videos, Shorts
 - **VK:** Video
 - **BBC iPlayer:** Videos
 - **LinkedIn:** Video posts & Learning courses

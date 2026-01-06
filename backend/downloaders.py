@@ -39,7 +39,7 @@ class DownloaderMixin:
             "noplaylist": True, 
             "socket_timeout": 20, 
             "retries": 3,
-            "ffmpeg_location": self.ffmpeg_path # This relies on correct path setup in cli.py or core.py
+            "ffmpeg_location": self.ffmpeg_path
         }
         
         if trim_on:
@@ -63,7 +63,7 @@ class DownloaderMixin:
                 self.after(0, self.finish_success)
                 return 0
             except Exception as e:
-                print(f"Error details: {e}") # Print error to CLI for debugging
+                print(f"Error details: {e}") 
                 return 2 if "Stopped" in str(e) else 1
 
         # --- VIDEO MODE ---
@@ -74,13 +74,21 @@ class DownloaderMixin:
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
-                final_title = re.sub(r'[\\/*?:"<>|]', "", info.get('title', 'video'))
+                
+                # --- TITLE SAFEGUARD (New for Instagram support) ---
+                raw_title = info.get('title', 'video')
+                # Instagram captions are huge, truncating to 80 chars prevents Windows path errors
+                if len(raw_title) > 80: raw_title = raw_title[:80]
+                
+                final_title = re.sub(r'[\\/*?:"<>|]', "", raw_title).strip()
+                
                 if trim_on:
                     start_str = (t_start.replace(":", "-") if t_start else "0-00")
                     end_str = (t_end.replace(":", "-") if t_end else "")
                     if end_str:
                         trim_prefix = f"{start_str} - {end_str} "
                         final_title = trim_prefix + final_title
+                
                 video_height = info.get('height', 0) or (height_limit if height_limit else 1080)
                 video_width = info.get('width', 0) or 1920
             
